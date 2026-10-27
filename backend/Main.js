@@ -2,7 +2,28 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
 // Configuration for your Django backend
-const DJANGO_SERVER_URL = 'http://127.0.0';
+const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8000';
+const ALLOWED_ENDPOINTS = ['/api/register/', '/api/token/'];
+
+ipcMain.handle('send-to-django', async (event, endpoint, payload) => {
+  if (!ALLOWED_ENDPOINTS.includes(endpoint)) {
+    return { success: false, error: 'Endpoint not allowed.' };
+  }
+  try {
+    const response = await fetch(`${DJANGO_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, status: response.status, error: body.error || `Server responded ${response.status}` };
+    }
+    return { success: true, data: body };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
 
 let mainWindow;
 
