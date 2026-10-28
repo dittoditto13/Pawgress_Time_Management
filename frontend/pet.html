@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <section>
+        <head>Pet</head>
+    <p>Click to Interact</p>
+    
+    <img id="myGif" src="temp_pet.gif" alt="Click to play" style="cursor: pointer;">
+
+    <script>
+  const gifImage = document.getElementById('myGif');
+  
+  // Define your two image sources
+  const firstImage = "temp_pet.gif";
+  const secondImage = "temp_pet02.gif";
+
+  gifImage.addEventListener('click', function() {
+    // Check the current source and swap it
+    if (gifImage.src.includes(firstImage)) {
+      gifImage.src = secondImage;
+    } else {
+      gifImage.src = firstImage;
+    }
+  });
+</script>
+    </section>
+    
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
