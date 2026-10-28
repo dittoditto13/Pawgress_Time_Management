@@ -21,7 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # add 'accounts' and 'buddy' after running startapp for them
+    'accounts',
+    'buddy',
 ]
 
 MIDDLEWARE = [
