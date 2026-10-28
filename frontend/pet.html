@@ -20,15 +20,25 @@
   const firstImage = "temp_pet.gif";
   const secondImage = "temp_pet02.gif";
 
+  const gifDuration = 3000;
+
   gifImage.addEventListener('click', function() {
     // Check the current source and swap it
     if (gifImage.src.includes(firstImage)) {
       gifImage.src = secondImage;
+      setTimeout(() => {
+    gifImage.src = firstImage; // Path to your second GIF or static image
+  }, gifDuration);
     } else {
       gifImage.src = firstImage;
+      
     }
-  });
+    });
+    
+  
 </script>
+
+
     </section>
     
 
