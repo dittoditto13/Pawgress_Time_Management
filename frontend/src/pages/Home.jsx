@@ -3,13 +3,17 @@ import StreakSummary from '../components/StreakSummary.jsx';
 import HistoryStrip from '../components/HistoryStrip.jsx';
 import TaskForm from '../components/TaskForm.jsx';
 import TaskList from '../components/TaskList.jsx';
+import BuddyCard from '../components/BuddyCard.jsx';
+import StudyForm from '../components/StudyForm.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useBuddy } from '../context/BuddyContext.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { addDays, formatLong } from '../utils/dates.js';
 
 export default function Home() {
   const { user, logOut } = useAuth();
-  const { tasks, today, streak, addTask, updateTask, deleteTask, toggleComplete, loadSampleData, clearAll } = useData();
+  const { enabled: hasBuddy } = useBuddy();
+  const { loaded, saveError, tasks, today, streak, addTask, updateTask, deleteTask, toggleComplete, loadSampleData, clearAll } = useData();
   const [selected, setSelected] = useState(today);
   const [editing, setEditing] = useState(null);
 
@@ -27,6 +31,8 @@ export default function Home() {
     }
   };
 
+  if (!loaded && !saveError) return <p className="grid min-h-screen place-items-center text-sm text-neutral-500">Loading…</p>;
+
   const isToday = selected === today;
   const dayLabel = isToday ? `Today, ${formatLong(selected)}` : formatLong(selected);
 
@@ -35,10 +41,26 @@ export default function Home() {
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">StreakPet</h1>
         <div className="flex items-center gap-2 text-sm">
-          <span className="hidden truncate text-neutral-600 sm:inline">{user.email}</span>
-          <button type="button" className="btn" onClick={logOut}>Log out</button>
+          <span className="hidden truncate text-neutral-600 sm:inline">{user.isGuest ? 'Guest' : user.username || user.email}</span>
+          <button type="button" className="btn" onClick={logOut}>{user.isGuest ? 'Sign in' : 'Log out'}</button>
         </div>
       </header>
+
+      {user.isGuest && (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800" role="note">
+          You’re using a guest session. Tasks are saved on this device only.
+        </p>
+      )}
+      {saveError && (
+        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{saveError}</p>
+      )}
+
+      {hasBuddy && (
+        <>
+          <BuddyCard />
+          <StudyForm />
+        </>
+      )}
 
       <StreakSummary />
 

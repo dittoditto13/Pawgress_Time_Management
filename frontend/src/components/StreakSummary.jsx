@@ -1,7 +1,10 @@
 import { useData } from '../context/DataContext.jsx';
+import { useBuddy } from '../context/BuddyContext.jsx';
 
 export default function StreakSummary() {
   const { streak } = useData();
+  // When the study buddy is shown it has its own "study streak", so name this one by what it counts.
+  const { enabled: hasBuddy } = useBuddy();
   const t = streak.today;
   const pct = t.total ? Math.min(100, (t.done / t.total) * 100) : 0;
 
@@ -15,7 +18,7 @@ export default function StreakSummary() {
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-5xl font-bold leading-none tabular-nums" aria-live="polite">{streak.current}</p>
-          <p className="mt-1 text-sm text-neutral-600">day streak</p>
+          <p className="mt-1 text-sm text-neutral-600">{hasBuddy ? 'task streak' : 'day streak'}</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold leading-none tabular-nums">{streak.longest}</p>

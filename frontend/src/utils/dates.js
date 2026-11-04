@@ -31,17 +31,6 @@ export function daysBetween(startKey, endKey) {
   return out;
 }
 
-export function startOfWeek(key) {
-  const d = fromKey(key);
-  d.setDate(d.getDate() - d.getDay()); // Sunday start
-  return toKey(d);
-}
-
-export function weekKeys(key) {
-  const start = startOfWeek(key);
-  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-}
-
 export function weekdayOf(key) {
   return fromKey(key).getDay();
 }

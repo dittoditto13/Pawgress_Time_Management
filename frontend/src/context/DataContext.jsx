@@ -1,28 +1,62 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
-import { defaultData, loadData, saveData } from '../services/storage.js';
+import { backend } from '../services/backend.js';
+import { emptyData } from '../services/contract.js';
 import { addDays, msUntilMidnight, todayKey } from '../utils/dates.js';
 import { computeStreak } from '../utils/streak.js';
 
+// The signed-in user's tasks and the streak derived from them.
+//   loaded       : false until this user's data has been read from the backend
+//   tasks, today : the task list and today's date key ("YYYY-MM-DD", local time)
+//   streak       : { current, longest, today, days } from utils/streak.js
+//   saveError    : message if the last save failed, otherwise null
+//   addTask / updateTask / deleteTask / toggleComplete : edit tasks (saved automatically)
+//   loadSampleData / clearAll : testing aids
 const DataContext = createContext(null);
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
 
 export function DataProvider({ children }) {
   const { user } = useAuth();
-  const [data, setData] = useState(defaultData);
+  const [data, setData] = useState(emptyData);
+  const [loaded, setLoaded] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [today, setToday] = useState(() => todayKey());
-  const loadedFor = useRef(null);
+  const loadedFor = useRef(null); // id of the user whose data is currently in state
 
-  // Load this user's data whenever the signed-in user changes.
+  // Load this user's data whenever the signed-in user changes (including sign-out).
   useEffect(() => {
-    setData(user ? loadData(user.id) : defaultData());
-    loadedFor.current = user ? user.id : null;
+    loadedFor.current = null; // stops the save effect writing old data under a new user
+    setLoaded(false);
+    setSaveError(null);
+    if (!user) {
+      setData(emptyData());
+      return undefined;
+    }
+    let cancelled = false;
+    backend.data
+      .load(user.id)
+      .then((d) => {
+        if (cancelled) return;
+        setData(d);
+        loadedFor.current = user.id;
+        setLoaded(true);
+      })
+      .catch((err) => {
+        if (!cancelled) setSaveError(`Could not load your tasks: ${err.message}`);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  // Save on every change, but only once the right user's data has loaded.
+  // Save after every change, but only once the right user's data has loaded.
   useEffect(() => {
-    if (user && loadedFor.current === user.id) saveData(user.id, data);
-  }, [data, user]);
+    if (!user || !loaded || loadedFor.current !== user.id) return;
+    backend.data
+      .save(user.id, data)
+      .then(() => setSaveError(null))
+      .catch((err) => setSaveError(`Could not save your changes: ${err.message}`));
+  }, [data, user, loaded]);
 
   // A day ends at local midnight: roll "today" over then (and re-check each minute for sleeping tabs).
   useEffect(() => {
@@ -71,11 +105,11 @@ export function DataProvider({ children }) {
     setData((d) => ({ ...d, tasks: [...d.tasks, ...tasks], startedAt: start < d.startedAt ? start : d.startedAt }));
   }, []);
 
-  const clearAll = useCallback(() => setData({ ...defaultData() }), []);
+  const clearAll = useCallback(() => setData(emptyData()), []);
 
   const value = useMemo(
-    () => ({ tasks: data.tasks, today, streak, addTask, updateTask, deleteTask, toggleComplete, loadSampleData, clearAll }),
-    [data.tasks, today, streak, addTask, updateTask, deleteTask, toggleComplete, loadSampleData, clearAll]
+    () => ({ loaded, saveError, tasks: data.tasks, today, streak, addTask, updateTask, deleteTask, toggleComplete, loadSampleData, clearAll }),
+    [loaded, saveError, data.tasks, today, streak, addTask, updateTask, deleteTask, toggleComplete, loadSampleData, clearAll]
   );
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
