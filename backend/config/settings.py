@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
-
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 'accounts',
@@ -11,7 +11,11 @@ load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-insecure-key-change-me')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+if DEBUG:
+    ALLOWED_HOSTS = ['*']          # dev only: any Host header is accepted
+else:
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -23,9 +27,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'buddy',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware'
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -34,6 +41,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    'https://pawgressfront.vercel.app',
+    'http://localhost:3000',   
+    'http://localhost:5173',
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [r'^https://pawgressfront.*\.vercel\.app$']  # Vercel preview deploys
+CORS_ALLOW_HEADERS = list(default_headers) + ['ngrok-skip-browser-warning']
 
 ROOT_URLCONF = 'config.urls'
 

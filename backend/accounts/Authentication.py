@@ -15,8 +15,8 @@ def register_user(request):
         password = data.get("password")
 
         # 2. Basic validation check
-        if not username or not email or not password:
-            return JsonResponse({"error": "All fields are required."}, status=400)
+        if not username or not password or not email or email.strip() == "":
+            return JsonResponse({"error": "All fields, including a valid email, are required."}, status=400)
 
         # 3. Check if user already exists
         if User.objects.filter(username=username).exists():
