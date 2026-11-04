@@ -1,12 +1,12 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.views.generic import RedirectView  # <-- Added this import
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 from accounts.views import register_user   # adjust to wherever your view lives
-from django.urls import include, path
-    
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/register/', register_user),
